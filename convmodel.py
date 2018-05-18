@@ -13,6 +13,7 @@ def one_hot(x, n):
 
 num_classes = 3
 batch_size = 4
+test_batch_size = 50
 
 # --------------------------------------------------
 #
@@ -52,28 +53,28 @@ def dataSource(paths, batch_size):
 #
 # --------------------------------------------------
 
-def myModel(X, reuse=False):
+def myModel(X, batch, reuse=False):
     with tf.variable_scope('ConvNet', reuse=reuse):
         o1 = tf.layers.conv2d(inputs=X, filters=32, kernel_size=3, activation=tf.nn.relu)
         o2 = tf.layers.max_pooling2d(inputs=o1, pool_size=2, strides=2)
         o3 = tf.layers.conv2d(inputs=o2, filters=64, kernel_size=3, activation=tf.nn.relu)
         o4 = tf.layers.max_pooling2d(inputs=o3, pool_size=2, strides=2)
 
-        h = tf.layers.dense(inputs=tf.reshape(o4, [batch_size * 3, 18 * 33 * 64]), units=50, activation=tf.nn.relu)
+        h = tf.layers.dense(inputs=tf.reshape(o4, [batch * 3, 18 * 33 * 64]), units=50, activation=tf.nn.relu)
         y = tf.layers.dense(inputs=h, units=3, activation=tf.nn.softmax)
     return y
 
 example_batch_train, label_batch_train = dataSource(["Mi_DataSet/train/huchaGRAY/*.jpg", "Mi_DataSet/train/botellaGRAY/*.jpg", "Mi_DataSet/train/enchufeGRAY/*.jpg"], batch_size=batch_size)
 example_batch_valid, label_batch_valid = dataSource(["Mi_DataSet/valid/huchaGRAY/*.jpg", "Mi_DataSet/valid/botellaGRAY/*.jpg", "Mi_DataSet/valid/enchufeGRAY/*.jpg"], batch_size=batch_size)
-example_batch_test, label_batch_test = dataSource(["Mi_DataSet/test/huchaGRAY/*.jpg", "Mi_DataSet/test/botellaGRAY/*.jpg", "Mi_DataSet/test/enchufeGRAY/*.jpg"], batch_size=batch_size)
+example_batch_test, label_batch_test = dataSource(["Mi_DataSet/test/huchaGRAY/*.jpg", "Mi_DataSet/test/botellaGRAY/*.jpg", "Mi_DataSet/test/enchufeGRAY/*.jpg"], batch_size=test_batch_size)
 
 label_batch_train = tf.cast(label_batch_train, tf.float32)
 label_batch_valid = tf.cast(label_batch_valid, tf.float32)
 label_batch_test = tf.cast(label_batch_test, tf.float32)
 
-example_batch_train_predicted = myModel(example_batch_train, reuse=False)
-example_batch_valid_predicted = myModel(example_batch_valid, reuse=True)
-example_batch_test_predicted = myModel(example_batch_test, reuse=True)
+example_batch_train_predicted = myModel(example_batch_train, batch_size, reuse=False)
+example_batch_valid_predicted = myModel(example_batch_valid, batch_size, reuse=True)
+example_batch_test_predicted = myModel(example_batch_test, test_batch_size, reuse=True)
 
 cost = tf.reduce_sum(tf.square(example_batch_train_predicted - label_batch_train))
 cost_valid = tf.reduce_sum(tf.square(example_batch_valid_predicted - label_batch_valid))
